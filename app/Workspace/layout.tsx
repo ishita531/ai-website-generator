@@ -1,13 +1,22 @@
-import React from 'react'
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { Sidebar } from "@/components/ui/sidebar"
+import { AppSidebar } from "./_components/AppSidebar"
+import AppHeader from "./_components/AppHeader"
 
-function WorkspaceLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>{children}</div>
+    <SidebarProvider>
+      <AppSidebar />
+
+   
+   
+        <div className="w-full">
+          <AppHeader/>
+            {children}
+
+        </div>
+        
+     
+    </SidebarProvider>
   )
 }
-
-export default WorkspaceLayout

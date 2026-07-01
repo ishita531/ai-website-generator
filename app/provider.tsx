@@ -11,7 +11,7 @@ function Provider({
     }>) {
         const{user}=useUser();
         const[userDetail,setUserDetail]=useState<any>()
-
+        
         useEffect(()=>{
             user && CreateNewUser()
         },[user]
@@ -21,7 +21,7 @@ function Provider({
 
             })
             console.log(result.data)
-            setUserDetail(result.data)
+            setUserDetail(result.data.user)
         }
     return (
         <div>

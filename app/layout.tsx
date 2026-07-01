@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
 import Provider from "./provider";
+import { Toaster } from "sonner";
 
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
         >
           <Provider>
             {children}
-
+            <Toaster/>
           </Provider>
           
         </body>
