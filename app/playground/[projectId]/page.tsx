@@ -82,6 +82,8 @@ function PlayGround() {
         if(result.data?.chatMessages?.length==1){
             const userMsg=result.data?.chatMessages[0].content
             SendMessage(userMsg)
+        }else{
+            setMessages(result.data?.chatMessages)
         }
     }
     const SendMessage = async (userInput: string) => {
@@ -143,8 +145,17 @@ function PlayGround() {
     }
 
     useEffect(()=>{
-        console.log(generatedCode)
-    },[generatedCode])
+        if(messages.length >0){
+            SaveMessages();
+        }
+    },[messages])
+
+    const SaveMessages= async ()=>{
+        const result = await axios.put('/api/chats',{
+            messages:messages,
+            frameId:frameId
+        })
+    }
     return (
         <div>
             <PlaygroundHeader />
@@ -152,7 +163,7 @@ function PlayGround() {
                 <ChatSection messages={messages ?? []}
                     onSend={(input: string) => SendMessage(input)}
                     loading={loading} />
-                <WebsiteDesign />
+                <WebsiteDesign generatedCode={generatedCode.replace('```','')} />
                 {/* <ElementSettingsSection/> */}
 
             </div>
