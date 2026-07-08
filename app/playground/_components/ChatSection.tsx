@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 type Props = {
   messages: Messages[]
   onSend:any
+  loading:boolean
 }
 
-function ChatSection({ messages,onSend }: Props) {
+function ChatSection({ messages,onSend ,loading}: Props) {
   const [input,setInput] = useState<string>('')
   const handleSend=()=>{
     console.log('Button clicked!')
@@ -36,7 +37,12 @@ function ChatSection({ messages,onSend }: Props) {
               </div>
             ))
           )}
+          {loading && <div className='flex justify-center items-center p-4'>
+            <div className='animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-zinc-800'></div>
+              <span className='ml-2 text-zinc-800'>Thinking & Generating your code</span>
 
+            
+          </div>}
       </div>
       {/* Footer section */}
       <div className='p-3 border-t flex items-center gap-2'>
