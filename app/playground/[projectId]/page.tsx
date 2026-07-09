@@ -6,6 +6,7 @@ import WebsiteDesign from '../_components/WebsiteDesign'
 import ElementSettingsSection from '../_components/ElementSettingsSection'
 import { useParams, useSearchParams } from 'next/navigation'
 import axios from 'axios'
+import { toast } from 'sonner'
 
 
 export type Frame = {
@@ -79,6 +80,11 @@ function PlayGround() {
         const result = await axios.get('/api/frames?frameId=' + frameId + "&projectId=" + projectId)
         console.log(result.data)
         setFrameDetail(result.data)
+        const designCode=result.data?.designCode;
+        const index = designCode.indexOf("```html") + 7
+        const fromattedCode = designCode.slice(index);
+        SetGeneratedCode(fromattedCode)
+
         if(result.data?.chatMessages?.length==1){
             const userMsg=result.data?.chatMessages[0].content
             SendMessage(userMsg)
@@ -121,7 +127,7 @@ function PlayGround() {
             }
         }
         
-        
+        await saveGeneratedCode(aiResponse)
         //after streaming
         if (!isCode) {
             setMessages((prev: any) => [
@@ -136,6 +142,7 @@ function PlayGround() {
                 { role: 'assistant', content: 'Your code is ready' }
             ]
             )
+            
             setLoading(false)
 
 
@@ -156,6 +163,19 @@ function PlayGround() {
             frameId:frameId
         })
     }
+
+   
+
+    const saveGeneratedCode = async(code:string)=>{
+        const result=await axios.put('/api/frames',{
+    
+        designCode:code,
+        frameId:frameId,
+        projectId:projectId
+    })
+    console.log(result.data)
+    toast.success('Website is ready')
+}
     return (
         <div>
             <PlaygroundHeader />
