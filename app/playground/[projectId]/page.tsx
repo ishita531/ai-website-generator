@@ -177,9 +177,9 @@ function PlayGround() {
     toast.success('Website is ready')
 }
     return (
-        <div>
+        <div className='h-screen flex flex-col'>
             <PlaygroundHeader />
-            <div className='flex'>
+            <div className='flex '>
                 <ChatSection messages={messages ?? []}
                     onSend={(input: string) => SendMessage(input)}
                     loading={loading} />
