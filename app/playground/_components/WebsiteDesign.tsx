@@ -159,6 +159,7 @@
 // export default WebsiteDesign
 import React, { useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
+import ElementSettingsSection from './ElementSettingsSection';
 
 
 type Props = {
@@ -197,6 +198,7 @@ export const HTML_CODE = `<!DOCTYPE html>
 function WebsiteDesign({ generatedCode }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [selectedScreenSize, setSelectedScreeenSize] = useState('web')
+  const[selectedEl,setselectedElement]=useState<HTMLElement|null>()
 
   // Initialize iframe shell once + attach listeners after load
   useEffect(() => {
@@ -248,6 +250,7 @@ function WebsiteDesign({ generatedCode }: Props) {
         selectedEl.addEventListener("blur", handleBlur);
         selectedEl.focus();
         console.log("Selected element:", selectedEl);
+        setselectedElement(selectedEl)
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -310,7 +313,8 @@ function WebsiteDesign({ generatedCode }: Props) {
   }, [generatedCode]);
 
   return (
-    <div className='p-5 w-full h-full flex items-center flex-col'>
+    <div className='flex gap-2 w-full'>
+        <div className='p-5 w-full h-full flex items-center flex-col'>
       <iframe
         ref={iframeRef}
         className={`${selectedScreenSize == 'web' ? 'w-full' : 'w-[390px] mx-auto'} flex-1 border rounded`}
@@ -320,6 +324,12 @@ function WebsiteDesign({ generatedCode }: Props) {
         setSelectedScreeenSize={(v: string) => setSelectedScreeenSize(v)}
         generatedCode={generatedCode} />
     </div>
+    
+    <ElementSettingsSection 
+    //@ts-ignore
+    selectedEl={selectedEl} clearSelection={()=>setselectedElement(null)}/>
+    </div>
+    
   );
 }
 
