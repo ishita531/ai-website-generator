@@ -28,10 +28,10 @@
 //           <!-- Chart.js -->
 //           <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-          
+
 //       </head>
 //       <body id="root">
-      
+
 //       </body>
 //       </html>`
 
@@ -39,7 +39,7 @@
 //   const iframeRef = useRef<HTMLIFrameElement>(null);
 //   const [selectedScreenSize,setSelectedScreeenSize]=useState('web')
 //   // Initialize iframe shell once
-  
+
 // useEffect(() => {
 //     if (!iframeRef.current) return;
 //     const doc = iframeRef.current.contentDocument;
@@ -150,20 +150,24 @@
 //       generatedCode={generatedCode}/>
 //       </div>
 //       );
-    
-    
+
+
 // }
 
 
 
 // export default WebsiteDesign
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import WebPageTools from './WebPageTools';
 import ElementSettingsSection from './ElementSettingsSection';
+import { onSaveContext } from '@/context/onSaveContext';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { useParams, useSearchParams } from 'next/navigation';
 
 
 type Props = {
-  generatedCode: string
+    generatedCode: string
 }
 export const HTML_CODE = `<!DOCTYPE html>
       <html lang="en">
@@ -196,141 +200,179 @@ export const HTML_CODE = `<!DOCTYPE html>
       </html>`
 
 function WebsiteDesign({ generatedCode }: Props) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [selectedScreenSize, setSelectedScreeenSize] = useState('web')
-  const[selectedEl,setselectedElement]=useState<HTMLElement|null>()
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+    const [selectedScreenSize, setSelectedScreeenSize] = useState('web')
+    const [selectedEl, setselectedElement] = useState<HTMLElement | null>()
+    const { onsSaveData, setOnSaveData } = useContext(onSaveContext)
+    const { projectId } = useParams()
+    const params = useSearchParams()
+    const frameId = params.get('frameId')
 
-  // Initialize iframe shell once + attach listeners after load
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
 
-    let hoverEl: HTMLElement | null = null;
-    let selectedEl: HTMLElement | null = null;
+    // Initialize iframe shell once + attach listeners after load
+    useEffect(() => {
+        const iframe = iframeRef.current;
+        if (!iframe) return;
 
-    const handleMouseOver = (e: MouseEvent) => {
-        if (selectedEl) return;
-        const target = e.target as HTMLElement;
-        if (hoverEl && hoverEl !== target) {
-            hoverEl.style.outline = "";
-        }
-        hoverEl = target;
-        hoverEl.style.outline = "2px dotted blue";
-    };
+        let hoverEl: HTMLElement | null = null;
+        let selectedEl: HTMLElement | null = null;
 
-    const handleMouseOut = () => {
-        if (selectedEl) return;
-        if (hoverEl) {
-            hoverEl.style.outline = "";
-            hoverEl = null;
-        }
-    };
+        const handleMouseOver = (e: MouseEvent) => {
+            if (selectedEl) return;
+            const target = e.target as HTMLElement;
+            if (hoverEl && hoverEl !== target) {
+                hoverEl.style.outline = "";
+            }
+            hoverEl = target;
+            hoverEl.style.outline = "2px dotted blue";
+        };
 
-    const handleBlur = () => {
-        if (selectedEl) {
-            console.log("Final edited element:", selectedEl.outerHTML);
-        }
-    };
+        const handleMouseOut = () => {
+            if (selectedEl) return;
+            if (hoverEl) {
+                hoverEl.style.outline = "";
+                hoverEl = null;
+            }
+        };
 
-    const handleClick = (e: MouseEvent) => {
-        console.log('click fired', e.target)
-        e.preventDefault();
-        e.stopPropagation();
-        const target = e.target as HTMLElement;
+        const handleBlur = () => {
+            if (selectedEl) {
+                console.log("Final edited element:", selectedEl.outerHTML);
+            }
+        };
 
-        if (selectedEl && selectedEl !== target) {
-            selectedEl.style.outline = "";
-            selectedEl.removeAttribute("contenteditable");
-            selectedEl.removeEventListener("blur", handleBlur);
-        }
+        const handleClick = (e: MouseEvent) => {
+            console.log('click fired', e.target)
+            e.preventDefault();
+            e.stopPropagation();
+            const target = e.target as HTMLElement;
 
-        selectedEl = target;
-        selectedEl.style.outline = "2px solid red";
-        selectedEl.setAttribute("contenteditable", "true");
-        selectedEl.addEventListener("blur", handleBlur);
-        selectedEl.focus();
-        console.log("Selected element:", selectedEl);
-        setselectedElement(selectedEl)
-    };
+            if (selectedEl && selectedEl !== target) {
+                selectedEl.style.outline = "";
+                selectedEl.removeAttribute("contenteditable");
+                selectedEl.removeEventListener("blur", handleBlur);
+            }
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape" && selectedEl) {
-            selectedEl.style.outline = "";
-            selectedEl.removeAttribute("contenteditable");
-            selectedEl.removeEventListener("blur", handleBlur);
-            selectedEl = null;
-        }
-    };
+            selectedEl = target;
+            selectedEl.style.outline = "2px solid red";
+            selectedEl.setAttribute("contenteditable", "true");
+            selectedEl.addEventListener("blur", handleBlur);
+            selectedEl.focus();
+            console.log("Selected element:", selectedEl);
+            setselectedElement(selectedEl)
+        };
 
-    const setupListeners = () => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && selectedEl) {
+                selectedEl.style.outline = "";
+                selectedEl.removeAttribute("contenteditable");
+                selectedEl.removeEventListener("blur", handleBlur);
+                selectedEl = null;
+            }
+        };
+
+        const setupListeners = () => {
+            const doc = iframe.contentDocument;
+            if (!doc || !doc.body) {
+                console.log("doc/body not ready");
+                return;
+            }
+            console.log("attaching listeners", doc.body);
+            doc.body.addEventListener("mouseover", handleMouseOver);
+            doc.body.addEventListener("mouseout", handleMouseOut);
+            doc.body.addEventListener("click", handleClick);
+            doc.addEventListener("keydown", handleKeyDown);
+        };
+
         const doc = iframe.contentDocument;
-        if (!doc || !doc.body) {
-            console.log("doc/body not ready");
-            return;
+        if (doc) {
+            doc.open();
+            doc.write(HTML_CODE);
+            doc.close();
         }
-        console.log("attaching listeners", doc.body);
-        doc.body.addEventListener("mouseover", handleMouseOver);
-        doc.body.addEventListener("mouseout", handleMouseOut);
-        doc.body.addEventListener("click", handleClick);
-        doc.addEventListener("keydown", handleKeyDown);
-    };
 
-    const doc = iframe.contentDocument;
-    if (doc) {
-        doc.open();
-        doc.write(HTML_CODE);
-        doc.close();
+        // ✅ wait for the iframe to finish loading before attaching listeners
+        iframe.addEventListener("load", setupListeners);
+
+        return () => {
+            iframe.removeEventListener("load", setupListeners);
+            const doc = iframe.contentDocument;
+            doc?.body?.removeEventListener("mouseover", handleMouseOver);
+            doc?.body?.removeEventListener("mouseout", handleMouseOut);
+            doc?.body?.removeEventListener("click", handleClick);
+            doc?.removeEventListener("keydown", handleKeyDown);
+        };
+    }, []);
+
+
+    // Update body only when code changes
+    useEffect(() => {
+        if (!iframeRef.current) return;
+        const doc = iframeRef.current.contentDocument;
+        if (!doc) return;
+
+        const root = doc.getElementById("root");
+        if (root) {
+            root.innerHTML =
+                generatedCode
+                    ?.replaceAll("```html", "")
+                    .replaceAll("```", "") ?? "";
+            // ⚠️ removed .replace("html", "") — was corrupting your markup, see earlier note
+        }
+    }, [generatedCode]);
+
+    useEffect(() => {
+        onsSaveData && onSaveCode()
+    }, [onsSaveData])
+    const onSaveCode = async () => {
+        if (iframeRef.current) {
+            try {
+                const iframeDoc = iframeRef.current.contentDocument ||
+                    iframeRef.current.contentWindow?.document;
+                if (iframeDoc) {
+                    const cloneDoc = iframeDoc.documentElement.cloneNode(true) as HTMLElement;
+
+                    const AllEls = cloneDoc.querySelectorAll<HTMLElement>('*')
+                    AllEls.forEach((el) => {
+                        el.style.outline = '';
+                        el.style.cursor = '';
+                    })
+                    const html = cloneDoc.outerHTML;
+                    console.log("HTML to save", html)
+                    const result = await axios.put('/api/frames', {
+
+                        designCode: html,
+                        frameId: frameId,
+                        projectId: projectId
+                    })
+                    console.log(result.data)
+                    toast.success('Saved!')
+                }
+            } catch (err) {
+                console.log(err)
+
+            }
+        }
     }
+    return (
+        <div className='flex gap-2 w-full'>
+            <div className='p-5 w-full h-full flex items-center flex-col'>
+                <iframe
+                    ref={iframeRef}
+                    className={`${selectedScreenSize == 'web' ? 'w-full' : 'w-[390px] mx-auto'} flex-1 border rounded`}
+                    sandbox="allow-scripts allow-same-origin"
+                />
+                <WebPageTools selectedScreenSize={selectedScreenSize}
+                    setSelectedScreeenSize={(v: string) => setSelectedScreeenSize(v)}
+                    generatedCode={generatedCode} />
+            </div>
 
-    // ✅ wait for the iframe to finish loading before attaching listeners
-    iframe.addEventListener("load", setupListeners);
+            <ElementSettingsSection
+                //@ts-ignore
+                selectedEl={selectedEl} clearSelection={() => setselectedElement(null)} />
+        </div>
 
-    return () => {
-        iframe.removeEventListener("load", setupListeners);
-        const doc = iframe.contentDocument;
-        doc?.body?.removeEventListener("mouseover", handleMouseOver);
-        doc?.body?.removeEventListener("mouseout", handleMouseOut);
-        doc?.body?.removeEventListener("click", handleClick);
-        doc?.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
-
-  // Update body only when code changes
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
-
-    const root = doc.getElementById("root");
-    if (root) {
-      root.innerHTML =
-        generatedCode
-          ?.replaceAll("```html", "")
-          .replaceAll("```", "") ?? "";
-      // ⚠️ removed .replace("html", "") — was corrupting your markup, see earlier note
-    }
-  }, [generatedCode]);
-
-  return (
-    <div className='flex gap-2 w-full'>
-        <div className='p-5 w-full h-full flex items-center flex-col'>
-      <iframe
-        ref={iframeRef}
-        className={`${selectedScreenSize == 'web' ? 'w-full' : 'w-[390px] mx-auto'} flex-1 border rounded`}
-        sandbox="allow-scripts allow-same-origin"
-      />
-      <WebPageTools selectedScreenSize={selectedScreenSize}
-        setSelectedScreeenSize={(v: string) => setSelectedScreeenSize(v)}
-        generatedCode={generatedCode} />
-    </div>
-    
-    <ElementSettingsSection 
-    //@ts-ignore
-    selectedEl={selectedEl} clearSelection={()=>setselectedElement(null)}/>
-    </div>
-    
-  );
+    );
 }
 
 export default WebsiteDesign
