@@ -20,7 +20,7 @@ export type Messages = {
     content: string
 }
 
-const Prompt =`userInput: {userInput}
+const Prompt = `userInput: {userInput}
 
 Instructions:
 
@@ -80,15 +80,15 @@ function PlayGround() {
         const result = await axios.get('/api/frames?frameId=' + frameId + "&projectId=" + projectId)
         console.log(result.data)
         setFrameDetail(result.data)
-        const designCode=result.data?.designCode;
+        const designCode = result.data?.designCode;
         const index = designCode.indexOf("```html") + 7
         const fromattedCode = designCode.slice(index);
         SetGeneratedCode(fromattedCode)
 
-        if(result.data?.chatMessages?.length==1){
-            const userMsg=result.data?.chatMessages[0].content
+        if (result.data?.chatMessages?.length == 1) {
+            const userMsg = result.data?.chatMessages[0].content
             SendMessage(userMsg)
-        }else{
+        } else {
             setMessages(result.data?.chatMessages)
         }
     }
@@ -103,7 +103,7 @@ function PlayGround() {
         const result = await fetch('/api/ai-website', {
             method: 'POST',
             body: JSON.stringify({
-                messages: [{ role: 'user', content: Prompt?.replace('{userInput}',userInput) }]
+                messages: [{ role: 'user', content: Prompt?.replace('{userInput}', userInput) }]
             })
         })
         const reader = result.body?.getReader()
@@ -126,14 +126,14 @@ function PlayGround() {
                 SetGeneratedCode((prev: any) => prev + chunk)
             }
         }
-        
+
         await saveGeneratedCode(aiResponse)
         //after streaming
         if (!isCode) {
             setMessages((prev: any) => [
                 ...prev,
                 { role: 'assistant', content: aiResponse }
-                
+
             ])
             setLoading(false)
         } else {
@@ -142,7 +142,7 @@ function PlayGround() {
                 { role: 'assistant', content: 'Your code is ready' }
             ]
             )
-            
+
             setLoading(false)
 
 
@@ -151,31 +151,31 @@ function PlayGround() {
 
     }
 
-    useEffect(()=>{
-        if(messages.length >0){
+    useEffect(() => {
+        if (messages.length > 0) {
             SaveMessages();
         }
-    },[messages])
+    }, [messages])
 
-    const SaveMessages= async ()=>{
-        const result = await axios.put('/api/chats',{
-            messages:messages,
-            frameId:frameId
+    const SaveMessages = async () => {
+        const result = await axios.put('/api/chats', {
+            messages: messages,
+            frameId: frameId
         })
     }
 
-   
 
-    const saveGeneratedCode = async(code:string)=>{
-        const result=await axios.put('/api/frames',{
-    
-        designCode:code,
-        frameId:frameId,
-        projectId:projectId
-    })
-    console.log(result.data)
-    toast.success('Website is ready')
-}
+
+    const saveGeneratedCode = async (code: string) => {
+        const result = await axios.put('/api/frames', {
+
+            designCode: code,
+            frameId: frameId,
+            projectId: projectId
+        })
+        console.log(result.data)
+        toast.success('Website is ready')
+    }
     return (
         <div className='h-screen flex flex-col'>
             <PlaygroundHeader />
@@ -183,7 +183,7 @@ function PlayGround() {
                 <ChatSection messages={messages ?? []}
                     onSend={(input: string) => SendMessage(input)}
                     loading={loading} />
-                <WebsiteDesign generatedCode={generatedCode.replace('```','')} />
+                <WebsiteDesign generatedCode={generatedCode.replace('```', '')} />
                 {/* <ElementSettingsSection/> */}
 
             </div>
