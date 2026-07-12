@@ -1,16 +1,17 @@
 "use client"
 import { HomeIcon, ImagePlus, Key, LayoutDashboard, Loader2Icon, User } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import {
     Button
 
 } from '@/components/ui/button'
 import { ArrowUp } from 'lucide-react'
-import { SignInButton, useUser } from '@clerk/nextjs'
+import { SignInButton, useAuth, useUser } from '@clerk/nextjs'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios'
 import { useRouter } from 'next/navigation'
+import { UserDetailContext } from '@/context/UserDetailContext'
 
 
 const suggestions = [
@@ -40,10 +41,19 @@ const suggestions = [
 
 function Hero() {
     const [userInput, setUserInput] = useState<string>()
-    const { user } = useUser() 
+    const { user } = useUser()
     const router = useRouter()
-    const [loading,setLoading]=useState(false)
+    const [loading, setLoading] = useState(false)
+    const { has } = useAuth()
+    const hasUnlimitedAccess = has && has({ plan: 'unlimited' })
+    const {userDetail,setUserDetail}=useContext(UserDetailContext)
+    
+
     const createNewProject = async () => {
+        if(!hasUnlimitedAccess && userDetail?.credits<=0){
+            toast.error('You have no credits left.Please upgrrade to premium!!')
+            return;
+        }
         setLoading(true)
         const projectId = uuidv4();
         const frameId = generateRandomFrameNumber();
@@ -58,11 +68,16 @@ function Hero() {
             const result = await axios.post('/api/projects', {
                 projectId: projectId,
                 frameId: frameId,
-                messages: messages
+                messages: messages,
+                credits:userDetail?.credits
             })
             console.log(result.data)
             toast.success('Project Created')
             router.push(`/playground/${projectId}?frameId=${frameId}`)
+            setUserDetail((prev:any)=>({
+                ...prev,
+                credits:prev?.credis!-1
+            }))
             setLoading(false)
         } catch (e) {
             toast.error('Internal Server Eror!!')
@@ -85,16 +100,16 @@ function Hero() {
                     <Button variant={'ghost'} ><ImagePlus /></Button>
                     {user ? (
                         <Button disabled={!userInput || loading}
-                          onClick={createNewProject}>{loading?<Loader2Icon className='animate-spin'/>:<ArrowUp />}
-                          </Button>
-                    ):(
+                            onClick={createNewProject}>{loading ? <Loader2Icon className='animate-spin' /> : <ArrowUp />}
+                        </Button>
+                    ) : (
                         <SignInButton mode='modal' forceRedirectUrl={'/workspace'}>
-                        <Button disabled={!userInput}  ><ArrowUp /></Button>
-                    </SignInButton>
+                            <Button disabled={!userInput}  ><ArrowUp /></Button>
+                        </SignInButton>
 
                     )}
-                    
-                    
+
+
 
                 </div>
             </div>
